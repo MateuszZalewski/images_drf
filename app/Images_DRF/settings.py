@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     # installed libs
     'rest_framework',
     # my apps
+    'accounts',
+    'images',
 ]
 
 MIDDLEWARE = [

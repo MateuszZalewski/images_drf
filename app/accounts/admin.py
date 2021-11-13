@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Account, Tier, Perk
 
-# Register your models here.
+admin.site.register(Account)
+admin.site.register(Tier)
+admin.site.register(Perk)
