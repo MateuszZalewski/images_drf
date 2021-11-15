@@ -15,7 +15,7 @@ services:
   db:
     image: postgres:13.0-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - postgres_data:/var/lib/postgresql/data_images/
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres123
