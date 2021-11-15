@@ -21,4 +21,4 @@ class Image(models.Model):
     image = models.ImageField(upload_to=UploadToPathAndRename('original_size'))
 
     def __str__(self):
-        return self.image
+        return self.image.name

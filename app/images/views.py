@@ -1,13 +1,14 @@
 from rest_framework import viewsets, status
+from rest_framework.mixins import DestroyModelMixin
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import Image
 from .serializers import ImageSerializer
 
 
-class ImageViewSet(viewsets.ViewSet):
+class ImageViewSet(DestroyModelMixin, viewsets.GenericViewSet):
     """
-    A simple viewset to list all images
+    Images ViewSet
     """
     permission_classes = [IsAuthenticated]
     serializer_class = ImageSerializer

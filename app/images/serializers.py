@@ -1,13 +1,12 @@
 from rest_framework import serializers
 from .models import Image
-import PIL
 
 
 class ImageSerializer(serializers.Serializer):
     image = serializers.ImageField(use_url=True)
 
     class Meta:
-        fields = ['image']
+        fields = '__all__'
 
     def create(self, validated_data):
         validated_data['owner'] = self.context['user']
