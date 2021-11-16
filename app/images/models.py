@@ -18,7 +18,7 @@ class UploadToPathAndRename(object):
 
 class Image(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=UploadToPathAndRename('original_size'))
+    image = models.ImageField(upload_to=UploadToPathAndRename(''))
 
     def __str__(self):
         return self.image.name
