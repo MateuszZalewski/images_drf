@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # installed libs
     'rest_framework',
+    'versatileimagefield',
     # my apps
     'accounts',
     'images',

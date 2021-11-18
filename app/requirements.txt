@@ -2,3 +2,4 @@ Django==3.2.9
 psycopg2-binary==2.9.2
 djangorestframework==3.12.4
 Pillow==8.4.0
+django-versatileimagefield==2.2

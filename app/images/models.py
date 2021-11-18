@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.deconstruct import deconstructible
+from versatileimagefield.fields import VersatileImageField
 from uuid import uuid4
 import os
 
@@ -18,7 +19,9 @@ class UploadToPathAndRename(object):
 
 class Image(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to=UploadToPathAndRename(''))
+    image = VersatileImageField(upload_to=UploadToPathAndRename(''), height_field='height', width_field='width')
+    width = models.PositiveIntegerField(blank=True, null=True)
+    height = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.image.name
