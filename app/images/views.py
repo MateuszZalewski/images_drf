@@ -5,6 +5,9 @@ from rest_framework.decorators import api_view
 
 from django.http import HttpResponseForbidden, Http404
 from django.http.response import FileResponse
+from django.shortcuts import redirect
+
+from accounts.models import Account
 
 from .models import Image
 from .serializers import ImageSerializer
@@ -15,20 +18,6 @@ def media_access(request, path):
     """
     View to access original image
     """
-    user = request.user
-    image = Image.objects.filter(image=path).first()
-    if image.owner == user or user.is_staff:
-        response = FileResponse(image.image)
-        return response
-
-    return HttpResponseForbidden('Not authorized to access this file')
-
-
-@api_view(['GET'])
-def get_thumbnail(request, path, height):
-    """
-    View to access thumbnail
-    """
     access = False
     user = request.user
     image = Image.objects.filter(image=path).first()
@@ -37,7 +26,43 @@ def get_thumbnail(request, path, height):
     if user.is_staff:
         access = True
     elif image.owner == user:
+        account = Account.objects.filter(user=user).first()
+        perks = account.tier.perks.filter(name__exact='original image')
+        if perks:
+            access = True
+
+    if access:
+        response = FileResponse(image.image)
+        return response
+
+    return HttpResponseForbidden(f'Not authorized to access this file {user}')
+
+
+@api_view(['GET'])
+def get_thumbnail(request, path, height):
+    """
+    View to access thumbnail
+    """
+    height_perk_name = {
+        200: '200px thumbnail',
+        400: '400px thumbnail'
+    }
+    access = False
+    user = request.user
+    image = Image.objects.filter(image=path).first()
+    if not image:
+        return Http404()
+    if image.height == height:
+        return redirect('media', path=path)
+    if user.is_staff:
         access = True
+    elif image.owner == user:
+        account = Account.objects.filter(user=user).first()
+        perk_name = height_perk_name[height]
+        if perk_name:
+            perk = account.tier.perks.filter(name__exact=perk_name)
+            if perk:
+                access = True
 
     if access:
         new_width = height * image.width // image.height
@@ -62,7 +87,6 @@ class ImageViewSet(DestroyModelMixin, viewsets.GenericViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
-        pass
 
     def list(self, request):
         serializer = ImageSerializer(self.get_queryset(), context={'request': request}, many=True)
