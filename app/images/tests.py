@@ -1,14 +1,12 @@
 import io
 import tempfile
 
-from django.urls import reverse
+from PIL import Image as PIL_Image
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import InMemoryUploadedFile
-
-from rest_framework.test import APIClient, APITestCase
+from django.urls import reverse
 from rest_framework import status
-
-from PIL import Image as PIL_Image
+from rest_framework.test import APIClient, APITestCase
 
 from .models import Image
 
@@ -61,6 +59,55 @@ class APITestCaseWithMedia(APITestCase):
         image = Image.objects.create(owner=owner, image=file)
         client.logout()
         return image
+
+
+class GetImage(APITestCaseWithMedia):
+    """
+    Test getting image
+    """
+    fixtures = ['accounts.json']
+
+    def test_get_image_unauthorized(self):
+        """
+        Try to get image without authorization
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
+            response = client.get(reverse('media', args=[image.image.name]))
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_image_without_perk(self):
+        """
+        Try getting image without 'original image' perk
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('media', args=[image.image.name]))
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_image_valid(self):
+        """
+        Test getting your image with 'original image' perk
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'), (333, 443))
+            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            response = client.get(reverse('media', args=[image.image.name]))
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            img_bytes = next(response.streaming_content)
+            pil_image = PIL_Image.open(io.BytesIO(img_bytes))
+            self.assertEqual(pil_image.size, (333, 443))
+
+    def test_get_another_user_image(self):
+        """
+        Try to get a picture of another user with the 'original image' perk
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'), (333, 443))
+            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            response = client.get(reverse('media', args=[image.image.name]))
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class GetThumbnail(APITestCaseWithMedia):
