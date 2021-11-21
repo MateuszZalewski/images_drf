@@ -1,0 +1,48 @@
+[
+{
+  "model": "accounts.perk",
+  "pk": 1,
+  "fields": {
+    "name": "200px thumbnail",
+    "description": "Users with this perk have access to thumbnails of their images with a height of 200 pixels."
+  }
+},
+{
+  "model": "accounts.perk",
+  "pk": 2,
+  "fields": {
+    "name": "400px thumbnail",
+    "description": "Users with this perk have access to thumbnails of their images with a height of 400 pixels."
+  }
+},
+{
+  "model": "accounts.perk",
+  "pk": 3,
+  "fields": {
+    "name": "original image",
+    "description": "Users with this perk have access to their photos in original size."
+  }
+},
+{
+  "model": "accounts.tier",
+  "pk": 1,
+  "fields": {
+    "name": "Basic",
+    "perks": [
+      1
+    ]
+  }
+},
+{
+  "model": "accounts.tier",
+  "pk": 2,
+  "fields": {
+    "name": "Premium",
+    "perks": [
+      1,
+      2,
+      3
+    ]
+  }
+}
+]
