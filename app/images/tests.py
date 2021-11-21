@@ -11,7 +11,6 @@ from rest_framework import status
 from PIL import Image as PIL_Image
 
 from .models import Image
-from accounts.models import Account, Tier, Perk
 
 client = APIClient()
 
@@ -107,6 +106,42 @@ class GetThumbnail(APITestCaseWithMedia):
             img_bytes = next(response.streaming_content)
             pil_image = PIL_Image.open(io.BytesIO(img_bytes))
             self.assertEqual(pil_image.size, (200, 200))
+
+    def test_get_thumbnail_invalid_perks(self):
+        """
+        Test getting a thumbnail with a height you do not have permission to access
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('thumbnail', args=[image.image.name, 400]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_get_thumbnail_as_staff_user(self):
+        """
+        Test access to another user's image thumbnail as staff user
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'), (700, 700))
+            client.login(username='admin', password='admin')
+            response = client.get(reverse('thumbnail', args=[image.image.name, 666]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            img_bytes = next(response.streaming_content)
+            pil_image = PIL_Image.open(io.BytesIO(img_bytes))
+            self.assertEqual(pil_image.size, (666, 666))
+
+    def test_get_another_user_thumbnail(self):
+        """
+        Test access to another user's image thumbnail as regular user with valid perks
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('admin', 'admin'), (700, 700))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('thumbnail', args=[image.image.name, 200]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class GetAllImages(APITestCaseWithMedia):
