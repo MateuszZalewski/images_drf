@@ -3,6 +3,7 @@ import tempfile
 
 from PIL import Image as PIL_Image
 from django.contrib.auth.models import User
+from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
 from rest_framework import status
@@ -31,7 +32,7 @@ class APITestCaseWithMedia(APITestCase):
         cls.temporary_dir = None
         super(APITestCaseWithMedia, cls).tearDownClass()
 
-    def _get_temporary_image(self, size, extension):
+    def _get_temporary_image(self, size, extension='jpeg', temp_file=None):
         """
         creates NamedTemporaryFile and stores image created with PIL in it
         :param size: (height, width) tuple
@@ -40,8 +41,10 @@ class APITestCaseWithMedia(APITestCase):
         """
         color = (255, 0, 0)
         image = PIL_Image.new("RGB", size, color)
-        temp_file = tempfile.NamedTemporaryFile()
+        if temp_file is None:
+            temp_file = tempfile.NamedTemporaryFile()
         image.save(temp_file, extension)
+        temp_file.seek(0)
         return temp_file
 
     def _create_image(self, auth, size=(200, 200)):
@@ -61,7 +64,92 @@ class APITestCaseWithMedia(APITestCase):
         return image
 
 
-class GetImage(APITestCaseWithMedia):
+class PostImageTest(APITestCaseWithMedia):
+    """
+    Test uploading image
+    """
+    fixtures = ['accounts.json']
+
+    def test_upload_unauthorized(self):
+        """
+        Try uploading image without authorization
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            file = io.BytesIO()
+            pil_image = self._get_temporary_image((200, 200), 'jpeg', file)
+            data = {
+                'image': File(pil_image, 'name.jpg')
+            }
+
+            response = client.post(reverse('images-list'), data)
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertEqual(Image.objects.all().count(), 0)
+
+    def test_upload_valid_jpeg(self):
+        """
+        Test uploading valid jpeg image
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            file = io.BytesIO()
+            pil_image = self._get_temporary_image((200, 200), 'jpeg', file)
+            client.login(username='admin', password='admin')
+            data = {
+                'image': File(pil_image, 'name.jpg')
+            }
+
+            response = client.post(reverse('images-list'), data)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(Image.objects.all().count(), 1)
+
+    def test_upload_valid_png(self):
+        """
+        Test uploading valid png image
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            file = io.BytesIO()
+            pil_image = self._get_temporary_image((200, 200), 'png', file)
+            client.login(username='admin', password='admin')
+            data = {
+                'image': File(pil_image, 'name.png')
+            }
+
+            response = client.post(reverse('images-list'), data)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(Image.objects.all().count(), 1)
+
+    def test_upload_bmp(self):
+        """
+        Try uploading bmp image. Server should only accept jpeg and png.
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            file = io.BytesIO()
+            pil_image = self._get_temporary_image((200, 200), 'bmp', file)
+            client.login(username='admin', password='admin')
+            data = {
+                'image': File(pil_image, 'name.bmp')
+            }
+
+            response = client.post(reverse('images-list'), data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(Image.objects.all().count(), 0)
+
+    def test_upload_image_too_big(self):
+        """
+        Try uploading image that is too big
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            file = io.BytesIO()
+            pil_image = self._get_temporary_image((10_000, 24_000), 'jpeg', file)
+            client.login(username='admin', password='admin')
+            data = {
+                'image': File(pil_image, 'name.jpeg')
+            }
+            response = client.post(reverse('images-list'), data)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(Image.objects.all().count(), 0)
+
+
+class GetImageTest(APITestCaseWithMedia):
     """
     Test getting image
     """
@@ -110,7 +198,7 @@ class GetImage(APITestCaseWithMedia):
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class GetThumbnail(APITestCaseWithMedia):
+class GetThumbnailTest(APITestCaseWithMedia):
     """
     Test getting image thumbnail
     """
@@ -191,7 +279,7 @@ class GetThumbnail(APITestCaseWithMedia):
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class GetAllImages(APITestCaseWithMedia):
+class GetAllImagesTest(APITestCaseWithMedia):
     """
     Test getting list of all images belonging to requesting user
     """
