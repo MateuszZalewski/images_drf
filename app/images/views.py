@@ -1,13 +1,10 @@
-from rest_framework import viewsets, status
-from rest_framework.mixins import DestroyModelMixin
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-
+from accounts.models import Account
 from django.http import HttpResponseForbidden, Http404
 from django.http.response import FileResponse
-from django.shortcuts import redirect
-
-from accounts.models import Account
+from rest_framework import viewsets, status
+from rest_framework.decorators import api_view
+from rest_framework.mixins import DestroyModelMixin
+from rest_framework.response import Response
 
 from .models import Image
 from .serializers import ImageSerializer
@@ -52,8 +49,6 @@ def get_thumbnail(request, path, height):
     image = Image.objects.filter(image=path).first()
     if not image:
         return Http404()
-    if image.height == height:
-        return redirect('media', path=path)
     if user.is_staff:
         access = True
     elif image.owner == user:
