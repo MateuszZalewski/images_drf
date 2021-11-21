@@ -1,3 +1,4 @@
+import io
 import tempfile
 
 from django.urls import reverse
@@ -52,14 +53,60 @@ class APITestCaseWithMedia(APITestCase):
         with self.settings(MEDIA_ROOT=self.temporary_dir.name):
         :param auth: username, password iterable
         :param size: height, width tuple
-        :return: newly created Image tuple
+        :return: newly created Image
         """
         client.login(username=auth[0], password=auth[1])
         owner = User.objects.filter(username=auth[0]).first()
         test_image = self._get_temporary_image(size, 'jpeg')
         file = InMemoryUploadedFile(test_image, None, test_image.name, 'image/jpeg', test_image.__sizeof__(), None)
-        Image.objects.create(owner=owner, image=file)
+        image = Image.objects.create(owner=owner, image=file)
         client.logout()
+        return image
+
+
+class GetThumbnail(APITestCaseWithMedia):
+    """
+    Test getting image thumbnail
+    """
+    fixtures = ['accounts.json']
+
+    def test_get_thumbnail_unauthorized(self):
+        """
+        Try to get thumbnail without authorization
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
+            response = client.get(reverse('thumbnail', args=[image.image.name, 400]))
+            self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_thumbnail_valid(self):
+        """
+        Test getting thumbnail as owner with necessary perks
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'), (300, 300))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('thumbnail', args=[image.image.name, 200]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            img_bytes = next(response.streaming_content)
+            pil_image = PIL_Image.open(io.BytesIO(img_bytes))
+            self.assertEqual(pil_image.size, (200, 200))
+
+    def test_get_thumbnail_with_original_size_valid(self):
+        """
+        Test getting thumbnail with the same height as the original size.
+        User have perk to request thumbnail of this height but dont have perk to request original image
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'), (200, 200))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('thumbnail', args=[image.image.name, 200]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            img_bytes = next(response.streaming_content)
+            pil_image = PIL_Image.open(io.BytesIO(img_bytes))
+            self.assertEqual(pil_image.size, (200, 200))
 
 
 class GetAllImages(APITestCaseWithMedia):
