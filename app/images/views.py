@@ -1,5 +1,5 @@
 from accounts.models import Account
-from django.http import HttpResponseForbidden, Http404, JsonResponse
+from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponseBadRequest
 from django.http.response import FileResponse
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -33,6 +33,8 @@ def fetch_expiring_link(request, path, time):
     image = Image.objects.filter(image=path).first()
     if not image:
         return Http404()
+    if time < 300 or time > 30000:
+        return HttpResponseBadRequest()
     if user.is_staff:
         access = True
     elif image.owner == user:
