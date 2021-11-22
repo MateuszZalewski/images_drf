@@ -1,9 +1,11 @@
-from django.db import models
+import os
+from uuid import uuid4
+
 from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from versatileimagefield.fields import VersatileImageField
-from uuid import uuid4
-import os
 
 
 @deconstructible
@@ -25,3 +27,15 @@ class Image(models.Model):
 
     def __str__(self):
         return self.image.name
+
+
+class ExpiringLink(models.Model):
+    image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    created = models.DateTimeField(default=timezone.now)
+    expiring = models.DateTimeField()
+
+    def __str__(self):
+        return f'{self.image} link expiring in {self.expiring}'
+
+    def get_period(self):
+        return self.expiring - self.created
