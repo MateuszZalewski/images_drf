@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.deconstruct import deconstructible
 from versatileimagefield.fields import VersatileImageField
@@ -15,7 +16,7 @@ class UploadToPathAndRename(object):
 
     def __call__(self, instance, filename):
         extension = filename.split('.')[-1]
-        filename = f'{str(uuid4())}.{extension}'
+        filename = f'{uuid4().hex}.{extension}'
         return os.path.join(self.sub_path, filename)
 
 
@@ -29,8 +30,13 @@ class Image(models.Model):
         return self.image.name
 
 
+def uuid4_hex():
+    return uuid4().hex
+
+
 class ExpiringLink(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
+    name = models.CharField(default=uuid4_hex, max_length=32)
     created = models.DateTimeField(default=timezone.now)
     expiring = models.DateTimeField()
 
@@ -39,3 +45,6 @@ class ExpiringLink(models.Model):
 
     def get_period(self):
         return self.expiring - self.created
+
+    def get_absolute_url(self):
+        return reverse('get-expiring', kwargs={'name': self.name})
