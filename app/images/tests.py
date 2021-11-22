@@ -132,6 +132,7 @@ class PostImageTest(APITestCaseWithMedia):
             }
 
             response = client.post(reverse('images-list'), data)
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(Image.objects.all().count(), 1)
 
@@ -148,6 +149,7 @@ class PostImageTest(APITestCaseWithMedia):
             }
 
             response = client.post(reverse('images-list'), data)
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(Image.objects.all().count(), 1)
 
@@ -164,6 +166,7 @@ class PostImageTest(APITestCaseWithMedia):
             }
 
             response = client.post(reverse('images-list'), data)
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(Image.objects.all().count(), 0)
 
@@ -179,6 +182,7 @@ class PostImageTest(APITestCaseWithMedia):
                 'image': File(pil_image, 'name.jpeg')
             }
             response = client.post(reverse('images-list'), data)
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertEqual(Image.objects.all().count(), 0)
 
@@ -206,6 +210,7 @@ class GetImageTest(APITestCaseWithMedia):
             image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
             client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
             response = client.get(reverse('media', args=[image.image.name]))
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_get_image_valid(self):
@@ -216,6 +221,7 @@ class GetImageTest(APITestCaseWithMedia):
             image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'), (333, 443))
             client.login(username='sunshine', password='YUsPygfgf8rLaU7')
             response = client.get(reverse('media', args=[image.image.name]))
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             img_bytes = next(response.streaming_content)
             pil_image = PIL_Image.open(io.BytesIO(img_bytes))
@@ -229,6 +235,7 @@ class GetImageTest(APITestCaseWithMedia):
             image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'), (333, 443))
             client.login(username='sunshine', password='YUsPygfgf8rLaU7')
             response = client.get(reverse('media', args=[image.image.name]))
+            client.logout()
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
