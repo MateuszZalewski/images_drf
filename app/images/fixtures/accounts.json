@@ -597,24 +597,32 @@
     "description": "Users with this perk have access to thumbnails of their images with a height of 400 pixels."
   }
 },
-{
-  "model": "accounts.perk",
-  "pk": 3,
-  "fields": {
-    "name": "original image",
-    "description": "Users with this perk have access to their photos in original size."
-  }
-},
-{
-  "model": "accounts.tier",
-  "pk": 1,
-  "fields": {
-    "name": "Basic",
-    "perks": [
-      1
-    ]
-  }
-},
+  {
+    "model": "accounts.perk",
+    "pk": 3,
+    "fields": {
+      "name": "original image",
+      "description": "Users with this perk have access to their photos in original size."
+    }
+  },
+  {
+    "model": "accounts.perk",
+    "pk": 4,
+    "fields": {
+      "name": "expiring link",
+      "description": "Users with this perk have ability to fetch expiring link to owned image. Link can be viewed by anyone. User have to specify time in seconds between 300 and 30000"
+    }
+  },
+  {
+    "model": "accounts.tier",
+    "pk": 1,
+    "fields": {
+      "name": "Basic",
+      "perks": [
+        1
+      ]
+    }
+  },
 {
   "model": "accounts.tier",
   "pk": 2,
@@ -623,7 +631,8 @@
     "perks": [
       1,
       2,
-      3
+      3,
+      4
     ]
   }
 },

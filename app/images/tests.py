@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from .models import Image
+from .models import Image, ExpiringLink
 
 client = APIClient()
 
@@ -62,6 +62,40 @@ class APITestCaseWithMedia(APITestCase):
         image = Image.objects.create(owner=owner, image=file)
         client.logout()
         return image
+
+
+class ExpiringLinksTest(APITestCaseWithMedia):
+    """
+    Test creating and using expiring links to images
+    """
+    fixtures = ['accounts.json']
+
+    def test_fetch_expiring_link_valid(self):
+        """
+        Fetch expiring link to your own image with 'expiring link' perk assigned to your account tier
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'))
+            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            response = client.get(reverse('create-expiring', args=[image.image.name, 300]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            response = client.get(response.json()['link'])
+            img_bytes = next(response.streaming_content)
+            pil_image = PIL_Image.open(io.BytesIO(img_bytes))
+            self.assertEqual(pil_image.size, (200, 200))
+
+    def test_fetch_expiring_link_invalid_perks(self):
+        """
+        Fetch expiring link to your own image without 'expiring link' perk assigned to your account tier
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('seamel', 'ZwpDu9BGHRTTqKX'))
+            client.login(username='seamel', password='ZwpDu9BGHRTTqKX')
+            response = client.get(reverse('create-expiring', args=[image.image.name, 300]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+            self.assertEqual(ExpiringLink.objects.all().count(), 0)
 
 
 class PostImageTest(APITestCaseWithMedia):
