@@ -11,32 +11,34 @@ from versatileimagefield.fields import VersatileImageField
 
 @deconstructible
 class UploadToPathAndRename(object):
+
     def __init__(self, path):
         self.sub_path = path
 
     def __call__(self, instance, filename):
         extension = filename.split('.')[-1]
-        filename = f'{uuid4().hex}.{extension}'
+        filename = f'{uuid4_hex()}.{extension}'
         return os.path.join(self.sub_path, filename)
+
+
+def uuid4_hex():
+    return f'{uuid4().hex}'
 
 
 class Image(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     image = VersatileImageField(upload_to=UploadToPathAndRename(''), height_field='height', width_field='width')
     width = models.PositiveIntegerField(blank=True, null=True)
+
     height = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self):
         return self.image.name
 
 
-def uuid4_hex():
-    return uuid4().hex
-
-
 class ExpiringLink(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
-    name = models.CharField(default=uuid4_hex, max_length=32)
+    name = models.CharField(default=uuid4_hex, max_length=40)
     created = models.DateTimeField(default=timezone.now)
     expiring = models.DateTimeField()
 

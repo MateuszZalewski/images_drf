@@ -1,13 +1,56 @@
 from accounts.models import Account
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseForbidden, Http404, JsonResponse
 from django.http.response import FileResponse
+from django.utils import timezone
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.mixins import DestroyModelMixin
 from rest_framework.response import Response
 
-from .models import Image
+from .models import Image, ExpiringLink
 from .serializers import ImageSerializer
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def access_expiring(request, name):
+    """
+    view to access image under expiring link
+    """
+    link = ExpiringLink.objects.filter(name=name).first()
+    return FileResponse(link.image.image)
+    pass
+
+
+@api_view(['GET'])
+def fetch_expiring_link(request, path, time):
+    """
+    view to create expiring link. time must be between 300 and 30000
+    """
+    access = False
+    user = request.user
+    image = Image.objects.filter(image=path).first()
+    if not image:
+        return Http404()
+    if user.is_staff:
+        access = True
+    elif image.owner == user:
+        account = Account.objects.filter(user=user).first()
+        perks = account.tier.perks.filter(name__exact='expiring link')
+        if perks:
+            access = True
+
+    if access:
+        expiry_time = timezone.now() + timezone.timedelta(seconds=time)
+        expiring_link = ExpiringLink.objects.create(expiring=expiry_time, image=image)
+        data = {
+            'link': request.build_absolute_uri(expiring_link.get_absolute_url()),
+            'expires': expiring_link.expiring.strftime('%d-%m-%Y %H:%M:%S')
+        }
+        response = JsonResponse(data)
+        return response
+    return HttpResponseForbidden(f'Forbidden')
 
 
 @api_view(['GET'])
