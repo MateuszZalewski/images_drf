@@ -5,7 +5,7 @@ from django.http import \
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.mixins import DestroyModelMixin
 from rest_framework.response import Response
 
@@ -14,7 +14,6 @@ from .serializers import ImageSerializer
 
 
 @api_view(['GET'])
-@authentication_classes([])
 @permission_classes([])
 def access_expiring(request, name):
     """
