@@ -64,9 +64,7 @@ def media_access(request, path):
     """
     access = False
     user = request.user
-    image = Image.objects.filter(image=path).first()
-    if not image:
-        return Http404()
+    image = get_object_or_404(Image, image=path)
     if user.is_staff:
         access = True
     elif image.owner == user:
@@ -93,9 +91,7 @@ def get_thumbnail(request, path, height):
     }
     access = False
     user = request.user
-    image = Image.objects.filter(image=path).first()
-    if not image:
-        return Http404()
+    image = get_object_or_404(Image, image=path)
     if user.is_staff:
         access = True
     elif image.owner == user:
