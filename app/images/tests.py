@@ -69,7 +69,15 @@ class ExpiringLinksTest(APITestCaseWithMedia):
     """
     fixtures = ['accounts.json']
 
-    def test_get_image_form_expired_link(self):
+    def test_get_image_invalid_link(self):
+        """
+        Try to get image from not existing expiring link
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            response = client.get(reverse('get-expiring', args=['12345']))
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_image_from_expired_link(self):
         """
         Try to get image from expired link
         """

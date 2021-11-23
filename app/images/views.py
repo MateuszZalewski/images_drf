@@ -1,6 +1,8 @@
 from accounts.models import Account
-from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponseBadRequest, HttpResponseGone
-from django.http.response import FileResponse
+from django.http import \
+    HttpResponseForbidden, JsonResponse, \
+    HttpResponseBadRequest, HttpResponseGone, FileResponse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -18,7 +20,7 @@ def access_expiring(request, name):
     """
     view to access image under expiring link
     """
-    link = ExpiringLink.objects.filter(name=name).first()
+    link = get_object_or_404(ExpiringLink, name=name)
     if link.expiring < timezone.now():
         link.delete()
         return HttpResponseGone("Link expired")
@@ -32,9 +34,7 @@ def fetch_expiring_link(request, path, time):
     """
     access = False
     user = request.user
-    image = Image.objects.filter(image=path).first()
-    if not image:
-        return Http404()
+    image = get_object_or_404(Image, image=path)
     if time < 300 or time > 30000:
         return HttpResponseBadRequest()
     if user.is_staff:
