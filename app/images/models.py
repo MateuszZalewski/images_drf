@@ -29,7 +29,6 @@ class Image(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     image = VersatileImageField(upload_to=UploadToPathAndRename(''), height_field='height', width_field='width')
     width = models.PositiveIntegerField(blank=True, null=True)
-
     height = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self):
