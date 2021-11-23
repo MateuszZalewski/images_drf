@@ -1,5 +1,5 @@
 from accounts.models import Account
-from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponseBadRequest, HttpResponseGone
 from django.http.response import FileResponse
 from django.utils import timezone
 from rest_framework import viewsets, status
@@ -19,8 +19,10 @@ def access_expiring(request, name):
     view to access image under expiring link
     """
     link = ExpiringLink.objects.filter(name=name).first()
+    if link.expiring < timezone.now():
+        link.delete()
+        return HttpResponseGone("Link expired")
     return FileResponse(link.image.image)
-    pass
 
 
 @api_view(['GET'])

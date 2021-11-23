@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.core.files.base import File
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -55,12 +56,10 @@ class APITestCaseWithMedia(APITestCase):
         :param size: height, width tuple
         :return: newly created Image
         """
-        client.login(username=auth[0], password=auth[1])
         owner = User.objects.filter(username=auth[0]).first()
         test_image = self._get_temporary_image(size, 'jpeg')
         file = InMemoryUploadedFile(test_image, None, test_image.name, 'image/jpeg', test_image.__sizeof__(), None)
         image = Image.objects.create(owner=owner, image=file)
-        client.logout()
         return image
 
 
@@ -69,6 +68,20 @@ class ExpiringLinksTest(APITestCaseWithMedia):
     Test creating and using expiring links to images
     """
     fixtures = ['accounts.json']
+
+    def test_get_image_form_expired_link(self):
+        """
+        Try to get image from expired link
+        """
+        with self.settings(MEDIA_ROOT=self.temporary_dir.name):
+            image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'))
+            expiring = timezone.now() - timezone.timedelta(seconds=1)
+            expired_link = ExpiringLink.objects.create(image=image, expiring=expiring)
+            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            response = client.get(reverse('get-expiring', args=[expired_link.name]))
+            client.logout()
+            self.assertEqual(response.status_code, status.HTTP_410_GONE)
+            self.assertEqual(ExpiringLink.objects.count(), 0)
 
     def test_fetch_expiring_invalid_time(self):
         """
