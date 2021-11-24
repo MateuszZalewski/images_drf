@@ -12,6 +12,27 @@ services:
       - ./.env.dev
     depends_on:
       - db
+      - redis
+  redis:
+    image: redis:alpine
+  celery:
+    build: ./app
+    command: celery -A Images_DRF worker -l info
+    volumes:
+      - ./app/:/usr/src/app/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - redis
+  celery-beat:
+    build: ./app
+    command: celery -A Images_DRF beat -l info
+    volumes:
+      - ./app/:/usr/arc/app/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - redis
   db:
     image: postgres:13.0-alpine
     volumes:

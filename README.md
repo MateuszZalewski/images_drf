@@ -2,7 +2,7 @@
 
 ## General info
 
-Simple image hosting written in Django. (WORK IN PROGRESS)
+Simple image hosting written in Django with expiring links functionality. (WORK IN PROGRESS)
 
 ## Technologies
 
@@ -11,6 +11,8 @@ Simple image hosting written in Django. (WORK IN PROGRESS)
 * python 3.9
 * django 3.2.9
 * django-rest-framework 3.12.4
+* celery 5.2.1
+* redis 4.0.2
 
 ## Quickstart
 
