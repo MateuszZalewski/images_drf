@@ -21,7 +21,6 @@ def access_expiring(request, name):
     """
     link = get_object_or_404(ExpiringLink, name=name)
     if link.expiring < timezone.now():
-        link.delete()
         return HttpResponseGone("Link expired")
     return FileResponse(link.image.image)
 
