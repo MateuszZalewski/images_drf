@@ -89,15 +89,14 @@ class ExpiringLinksTest(APITestCaseWithMedia):
             response = client.get(reverse('get-expiring', args=[expired_link.name]))
             client.logout()
             self.assertEqual(response.status_code, status.HTTP_410_GONE)
-            self.assertEqual(ExpiringLink.objects.count(), 0)
 
     def test_fetch_expiring_invalid_time(self):
         """
         Try to fetch expiring link to image with invalid time parameter
         """
         with self.settings(MEDIA_ROOT=self.temporary_dir.name):
-            image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'))
-            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            image = self._create_image(('chessGM', 'YUsPygfgf8rLaU7'))
+            client.login(username='chessGM', password='YUsPygfgf8rLaU7')
             response = client.get(reverse('create-expiring', args=[image.image.name, 299]))
             client.logout()
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -107,8 +106,8 @@ class ExpiringLinksTest(APITestCaseWithMedia):
         Fetch expiring link to your own image with 'expiring link' perk assigned to your account tier
         """
         with self.settings(MEDIA_ROOT=self.temporary_dir.name):
-            image = self._create_image(('sunshine', 'YUsPygfgf8rLaU7'))
-            client.login(username='sunshine', password='YUsPygfgf8rLaU7')
+            image = self._create_image(('chessGM', 'YUsPygfgf8rLaU7'))
+            client.login(username='chessGM', password='YUsPygfgf8rLaU7')
             response = client.get(reverse('create-expiring', args=[image.image.name, 300]))
             client.logout()
             self.assertEqual(response.status_code, status.HTTP_200_OK)

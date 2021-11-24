@@ -631,20 +631,32 @@
     "perks": [
       1,
       2,
-      3,
-      4
+      3
     ]
   }
 },
-{
-  "model": "accounts.account",
-  "pk": 1,
-  "fields": {
-    "user": 2,
-    "tier": 1
-  }
-},
-{
+  {
+    "model": "accounts.tier",
+    "pk": 3,
+    "fields": {
+      "name": "Enterprise",
+      "perks": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "accounts.account",
+    "pk": 1,
+    "fields": {
+      "user": 2,
+      "tier": 1
+    }
+  },
+  {
   "model": "accounts.account",
   "pk": 2,
   "fields": {
@@ -665,7 +677,7 @@
   "pk": 4,
   "fields": {
     "user": 5,
-    "tier": 2
+    "tier": 3
   }
 }
 ]
