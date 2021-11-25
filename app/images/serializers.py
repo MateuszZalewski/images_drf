@@ -1,15 +1,17 @@
 from rest_framework import serializers
+
 from .models import Image
 
 
 class ImageSerializer(serializers.Serializer):
+    pk = serializers.PrimaryKeyRelatedField(read_only=True)
     image = serializers.ImageField(use_url=True)
 
     class Meta:
         fields = '__all__'
 
     def create(self, validated_data):
-        validated_data['owner'] = self.context['user']
+        validated_data['owner'] = self.context['request'].user
         return Image.objects.create(**validated_data)
 
     def validate_image(self, value):

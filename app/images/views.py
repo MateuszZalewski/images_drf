@@ -116,7 +116,7 @@ class ImageViewSet(DestroyModelMixin, viewsets.GenericViewSet):
     serializer_class = ImageSerializer
 
     def create(self, request):
-        serializer = ImageSerializer(data=request.data, context={'user': request.user})
+        serializer = ImageSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
