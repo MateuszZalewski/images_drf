@@ -38,7 +38,7 @@ class Image(models.Model):
 class ExpiringLink(models.Model):
     image = models.ForeignKey(Image, on_delete=models.CASCADE)
     name = models.CharField(default=uuid4_hex, max_length=40)
-    created = models.DateTimeField(default=timezone.now)
+    created = models.DateTimeField(default=timezone.now, null=True)
     expiring = models.DateTimeField()
 
     def __str__(self):

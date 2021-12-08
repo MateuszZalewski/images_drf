@@ -1,16 +1,14 @@
 from accounts.models import Account
 from django.http import \
-    HttpResponseForbidden, JsonResponse, \
-    HttpResponseBadRequest, HttpResponseGone, FileResponse
+    HttpResponseForbidden, HttpResponseGone, FileResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.mixins import DestroyModelMixin
-from rest_framework.response import Response
+from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, ListModelMixin, RetrieveModelMixin
 
 from .models import Image, ExpiringLink
-from .serializers import ImageSerializer
+from .serializers import ImageSerializer, ExpiringLinkSerializer
 
 
 @api_view(['GET'])
@@ -23,36 +21,6 @@ def access_expiring(request, name):
     if link.expiring < timezone.now():
         return HttpResponseGone("Link expired")
     return FileResponse(link.image.image)
-
-
-@api_view(['GET'])
-def fetch_expiring_link(request, path, time):
-    """
-    view to create expiring link. time must be between 300 and 30000
-    """
-    access = False
-    user = request.user
-    image = get_object_or_404(Image, image=path)
-    if time < 300 or time > 30000:
-        return HttpResponseBadRequest()
-    if user.is_staff:
-        access = True
-    elif image.owner == user:
-        account = Account.objects.filter(user=user).first()
-        perks = account.tier.perks.filter(name__exact='expiring link')
-        if perks:
-            access = True
-
-    if access:
-        expiry_time = timezone.now() + timezone.timedelta(seconds=time)
-        expiring_link = ExpiringLink.objects.create(expiring=expiry_time, image=image)
-        data = {
-            'link': request.build_absolute_uri(expiring_link.get_absolute_url()),
-            'expires': expiring_link.expiring.strftime('%d-%m-%Y %H:%M:%S')
-        }
-        response = JsonResponse(data)
-        return response
-    return HttpResponseForbidden(f'Forbidden')
 
 
 @api_view(['GET'])
@@ -109,24 +77,27 @@ def get_thumbnail(request, path, height):
     return HttpResponseForbidden('Not authorized to access this file')
 
 
-class ImageViewSet(DestroyModelMixin, viewsets.GenericViewSet):
+class CreateListDeleteRetrieveViewSet(DestroyModelMixin, CreateModelMixin,
+                                      ListModelMixin, RetrieveModelMixin,
+                                      viewsets.GenericViewSet):
     """
-    Images ViewSet
+    A viewset that provides `retrieve`, `create`, 'delete' and `list` actions.
+
+    To use it, override the class and set the `.queryset` and
+    `.serializer_class` attributes.
     """
+    pass
+
+
+class ImageViewSet(CreateListDeleteRetrieveViewSet):
     serializer_class = ImageSerializer
 
-    def create(self, request):
-        serializer = ImageSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+    def get_queryset(self):
+        return self.request.user.image_set.all()
 
-    def list(self, request):
-        serializer = ImageSerializer(self.get_queryset(), context={'request': request}, many=True)
-        return Response(serializer.data)
+
+class ExpiringLinkViewSet(CreateListDeleteRetrieveViewSet):
+    serializer_class = ExpiringLinkSerializer
 
     def get_queryset(self):
-        return Image.objects.filter(owner=self.request.user)
+        return ExpiringLink.objects.filter(image__owner=self.request.user)
