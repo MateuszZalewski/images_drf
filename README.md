@@ -48,8 +48,11 @@ Endpoint | HTTP method | CRUD Method | Result
 ---------|-------------|-------------|-------
 images | GET | READ | Get all images links
 images | POST | CREATE | Add image
+images/:pk | GET | READ | Get image info
 images/:pk | DELETE | DELETE | Remove image with pk specified
 media/:path | GET | READ | Get image
 media/:path/:height | GET | READ | Get image thumbnail
-media/:path/expiring/:time | GET | CREATE | Create expiring link to access image
+expiring | POST | CREATE | Create expiring link to access image
+expiring | GET | READ | Get all expiring links
+expiring/:pk | DELETE | DELETE | Delete expiring link
 link/:name | GET | READ | Get image from expiring link
