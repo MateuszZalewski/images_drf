@@ -163,3 +163,13 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute="*/1"),
     },
 }
+
+IMAGES = {
+    'max_seconds': 10000,
+    'min_seconds': 100,
+    'height_perk_name': {
+        200: '200px thumbnail',
+        400: '400px thumbnail'
+    },
+    'original_image_perk': 'original_image'
+}

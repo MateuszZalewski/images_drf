@@ -1,4 +1,5 @@
 from accounts.models import Account
+from django.conf import settings
 from django.http import \
     HttpResponseForbidden, HttpResponseGone, FileResponse
 from django.shortcuts import get_object_or_404
@@ -35,7 +36,7 @@ def media_access(request, path):
         access = True
     elif image.owner == user:
         account = Account.objects.filter(user=user).first()
-        perks = account.tier.perks.filter(name__exact='original image')
+        perks = account.tier.perks.filter(name__exact=settings.IMAGES.get('original_image_perk', ''))
         if perks:
             access = True
 
@@ -51,10 +52,6 @@ def get_thumbnail(request, path, height):
     """
     View to access thumbnail
     """
-    height_perk_name = {
-        200: '200px thumbnail',
-        400: '400px thumbnail'
-    }
     access = False
     user = request.user
     image = get_object_or_404(Image, image=path)
@@ -62,7 +59,7 @@ def get_thumbnail(request, path, height):
         access = True
     elif image.owner == user:
         account = Account.objects.filter(user=user).first()
-        perk_name = height_perk_name[height]
+        perk_name = settings.IMAGES.get('height_perk_name').get(height, None)
         if perk_name:
             perk = account.tier.perks.filter(name__exact=perk_name)
             if perk:

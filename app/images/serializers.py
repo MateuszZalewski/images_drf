@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -28,7 +29,8 @@ class ExpiringLinkSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField(read_only=True)
     created = serializers.DateTimeField(read_only=True)
     expiring = serializers.DateTimeField(read_only=True)
-    seconds = serializers.IntegerField(write_only=True, max_value=100000, min_value=60)
+    seconds = serializers.IntegerField(write_only=True, max_value=settings.IMAGES.get('max_seconds'),
+                                       min_value=settings.IMAGES.get('min_seconds'))
 
     class Meta:
         model = ExpiringLink
