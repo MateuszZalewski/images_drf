@@ -6,9 +6,19 @@ from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.mixins import DestroyModelMixin, CreateModelMixin, ListModelMixin, RetrieveModelMixin
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
 from .models import Image, ExpiringLink
 from .serializers import ImageSerializer, ExpiringLinkSerializer
+
+
+@api_view(['GET'])
+def api_root(request):
+    return Response({
+        'images': reverse('images-list', request=request),
+        'expiring': reverse('expiring-list', request=request)
+    })
 
 
 @api_view(['GET'])
