@@ -36,7 +36,7 @@ class ExpiringLinkSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data['expiring'] = timezone.now() + timezone.timedelta(seconds=validated_data.pop('seconds'))
-        return ExpiringLink(**validated_data)
+        return ExpiringLink.objects.create(**validated_data)
 
     def get_url(self, obj):
         url = self.context['request'].build_absolute_uri(obj.get_absolute_url())
